@@ -1,7 +1,9 @@
-fastWritableHashMap
+WritableHashMap
 ===========
 
-Rust WritableHashMap based on a faster hash function and Python dictionaries.
+Rust WritableHashMap based on a faster hash function and Python dictionaries with Read and Write traits in order to write and read hash tables from files without serialization/deserialization and rehashing.
+
+This is a modification of [tmmcguire/fasthashmap](tmmcguire/fasthashmap) with Read and Write traits.
 
 
 WARNING
@@ -67,7 +69,7 @@ http://www.cse.yorku.ca/~oz/hash.html.
 Hashtable
 ---------
 
-The hashtable code is loosely based on Python's dictionaries. Since the WritableHashMap
+The hashtable code is loosely based on Python's dictionaries. Since the HashMap
 implementation in the Rust standard library has been updated to be Robin Hood
 Hashing (i.e. bucket stealing), this implementation may not be faster than the
 standard libraries', although using the DJB2 hash function makes it likely.
@@ -95,8 +97,3 @@ Rust docs:
 * Pedro Celis. ["Robin Hood Hashing"](https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf).
 * Emmanuel Goossaert. ["Robin Hood hashing"](http://codecapsule.com/2013/11/11/robin-hood-hashing/).
 * Emmanuel Goossaert. ["Robin Hood hashing: backward shift deletion"](http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/).
-
-Name
-----
-
-Yes, I had to change the repo name from 'fashWritableHashMap'. This is because I can neither type nor see, apparently. Sorry.
