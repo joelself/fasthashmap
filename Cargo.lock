@@ -1,4 +1,4 @@
 [root]
-name = "fasthashmap"
+name = "WriteableHashMap"
 version = "0.1.0"
 

@@ -1,7 +1,7 @@
-fasthashmap
+fastWriteableHashMap
 ===========
 
-Rust hashmap based on a faster hash function and Python dictionaries.
+Rust WriteableHashMap based on a faster hash function and Python dictionaries.
 
 
 WARNING
@@ -13,20 +13,20 @@ strong. This map is open to
 
 CAUTION IS ADVISED.
 
-HashMap Use
+WriteableHashMap Use
 -----------
 
 The implementation in this module currently supports many of the same methods as
-std::collections::HashMap, but not all.
+std::collections::WriteableHashMap, but not all.
 
-### Constructing a HashMap ###
+### Constructing a WriteableHashMap ###
 
-    let map = HashMap::new();
+    let map = WriteableHashMap::new();
 
 Constructs a map with a default capacity, currently 8. The map will
 expand as necessary.
 
-    let map = HashMap::with_capacity( 30 );
+    let map = WriteableHashMap::with_capacity( 30 );
 
 Constructs a map with a capacity of at least 30.
 
@@ -67,7 +67,7 @@ http://www.cse.yorku.ca/~oz/hash.html.
 Hashtable
 ---------
 
-The hashtable code is loosely based on Python's dictionaries. Since the HashMap
+The hashtable code is loosely based on Python's dictionaries. Since the WriteableHashMap
 implementation in the Rust standard library has been updated to be Robin Hood
 Hashing (i.e. bucket stealing), this implementation may not be faster than the
 standard libraries', although using the DJB2 hash function makes it likely.
@@ -99,4 +99,4 @@ Rust docs:
 Name
 ----
 
-Yes, I had to change the repo name from 'fashhashmap'. This is because I can neither type nor see, apparently. Sorry.
+Yes, I had to change the repo name from 'fashWriteableHashMap'. This is because I can neither type nor see, apparently. Sorry.

@@ -39,7 +39,7 @@ impl Hasher for DJBHasher {
 
 /* ----------------------------------------------- */
 
-// This is an implementation of a Rust HashMap based on the DJB hash and
+// This is an implementation of a Rust WriteableHashMap based on the DJB hash and
 // Python's dictionaries. See:
 //
 // * http://stackoverflow.com/questions/327311/how-are-pythons-built-in-dictionaries-implemented
@@ -117,19 +117,19 @@ pub struct WriteableHashMap<K,V> where K: Write + Read + ?Sized V: Write + Read 
     ghosts    : usize,
 }
 
-impl<K,V> WritableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Sized, V: Write, Read + ?Sized {
+impl<K,V> WritableWriteableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Sized, V: Write, Read + ?Sized {
 
     #[inline]
-    pub fn new() -> HashMap<K,V> {
-        HashMap::with_capacity(8)
+    pub fn new() -> WriteableHashMap<K,V> {
+        WriteableHashMap::with_capacity(8)
     }
 
     #[inline]
-    pub fn with_capacity(sz: usize) -> HashMap<K,V> {
+    pub fn with_capacity(sz: usize) -> WriteableHashMap<K,V> {
         let capacity = usize::next_power_of_two(sz);
         let mut table = Vec::with_capacity(capacity);
         for _ in 0..capacity { table.push(Entry::Empty); }
-        HashMap {
+        WriteableHashMap {
             table   : table,
             capacity: capacity,
             mask    : (capacity as u64) - 1,
@@ -205,7 +205,7 @@ impl<K,V> WritableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Sized, V: Wr
 
     #[inline]
     fn do_expand(&mut self, new_capacity: usize) {
-        let mut new_tbl = HashMap::with_capacity( new_capacity );
+        let mut new_tbl = WriteableHashMap::with_capacity( new_capacity );
         for i in 0..self.table.len() {
             match std::mem::replace(&mut self.table[i], Entry::Empty) {
                 Entry::Full(k,v,h)               => { new_tbl.swap_with_hash(k,h,v); }
@@ -292,22 +292,22 @@ impl<K,V> WritableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Sized, V: Wr
         self.get(k).is_some()
     }
 
-    pub fn iter(&self) -> HashMapIter<K,V> {
-        HashMapIter { inner: self.table.iter() }
+    pub fn iter(&self) -> WriteableHashMapIter<K,V> {
+        WriteableHashMapIter { inner: self.table.iter() }
     }
 
-    pub fn keys(&self) -> HashMapKeys<K,V> {
-        HashMapKeys { inner: self.iter() }
+    pub fn keys(&self) -> WriteableHashMapKeys<K,V> {
+        WriteableHashMapKeys { inner: self.iter() }
     }
 }
 
 // ----------------------------------------
 
-pub struct HashMapIter<'l,K: 'l,V: 'l> {
+pub struct WriteableHashMapIter<'l,K: 'l,V: 'l> {
     inner: Iter<'l,Entry<K,V>>,
 }
 
-impl<'l,K,V> Iterator for HashMapIter<'l,K,V> {
+impl<'l,K,V> Iterator for WriteableHashMapIter<'l,K,V> {
     type Item = (&'l K, &'l V);
     fn next(&mut self) -> Option<(&'l K, &'l V)> {
         let mut n = self.inner.next();
@@ -327,11 +327,11 @@ impl<'l,K,V> Iterator for HashMapIter<'l,K,V> {
     }
 }
 
-pub struct HashMapKeys<'l,K: 'l,V: 'l> {
-    inner: HashMapIter<'l,K,V>,
+pub struct WriteableHashMapKeys<'l,K: 'l,V: 'l> {
+    inner: WriteableHashMapIter<'l,K,V>,
 }
 
-impl<'l,K,V> Iterator for HashMapKeys<'l,K,V> {
+impl<'l,K,V> Iterator for WriteableHashMapKeys<'l,K,V> {
     type Item = &'l K;
     fn next(&mut self) -> Option<&'l K> {
         match self.inner.next() {
@@ -344,14 +344,14 @@ impl<'l,K,V> Iterator for HashMapKeys<'l,K,V> {
 /* ----------------------------------------------- */
 
 pub struct HashSet<T> {
-    map: HashMap<T,()>
+    map: WriteableHashMap<T,()>
 }
 
 impl<T> HashSet<T> where T: Hash + Eq {
 
     #[inline]
     pub fn new() -> HashSet<T> {
-        HashSet { map: HashMap::new() }
+        HashSet { map: WriteableHashMap::new() }
     }
 
     #[inline]
@@ -368,7 +368,7 @@ impl<T> HashSet<T> where T: Hash + Eq {
     }
 
     #[inline]
-    pub fn iter(&self) -> HashMapKeys<T,()> {
+    pub fn iter(&self) -> WriteableHashMapKeys<T,()> {
         self.map.keys()
     }
 
@@ -410,7 +410,7 @@ mod tests {
     use std::fs::File;
     use std::io::{BufRead,BufReader};
 
-    use super::{HashMap,HashSet};
+    use super::{WriteableHashMap,HashSet};
 
     #[allow(dead_code)]         // Used by benchmarking code.
     fn get_words() -> Vec<String> {
@@ -421,7 +421,7 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let m: HashMap<usize,usize> = HashMap::new();
+        let m: WriteableHashMap<usize,usize> = WriteableHashMap::new();
         assert_eq!(m.len(), 0);
         assert_eq!(m.capacity(), 8);
         assert_eq!(m.get(&1), None);
@@ -433,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let mut m: HashMap<usize,usize> = HashMap::new();
+        let mut m: WriteableHashMap<usize,usize> = WriteableHashMap::new();
         assert_eq!(m.len(), 0);
         assert_eq!(m.insert(1,400), None);
         assert_eq!(m.len(), 1);
@@ -459,7 +459,7 @@ mod tests {
 
     #[test]
     fn test_eight() {
-        let mut m: HashMap<usize,usize> = HashMap::new();
+        let mut m: WriteableHashMap<usize,usize> = WriteableHashMap::new();
         let v = [1,3,5,7,9,11,13,15];
         for i in v.iter() {
             assert_eq!(m.insert(*i,100 * *i), None);
@@ -508,10 +508,10 @@ mod tests {
     // }
 
     // #[bench]
-    // fn hashmap_bench_stdlib(b: &mut extra::test::BenchHarness) {
+    // fn WriteableHashMap_bench_stdlib(b: &mut extra::test::BenchHarness) {
     //     let list = ["abashed", "acrid", "dachshund's", "hackle", "zigzagging"];
     //     b.iter( || {
-    //         let mut m = std::hashmap::HashMap::new();
+    //         let mut m = std::WriteableHashMap::WriteableHashMap::new();
     //         for w in list.iter() { m.insert(w, 27); }
     //     } );
     // }
@@ -523,28 +523,28 @@ mod tests {
     // }
 
     // #[bench]
-    // fn hashmap_bench_fasthashmap(b: &mut extra::test::BenchHarness) {
+    // fn WriteableHashMap_bench_fastWriteableHashMap(b: &mut extra::test::BenchHarness) {
     //     let list = ["abashed", "acrid", "dachshund's", "hackle", "zigzagging"];
     //     b.iter( || {
-    //         let mut m = HashMap::new();
+    //         let mut m = WriteableHashMap::new();
     //         for w in list.iter() { m.insert(w, 27); }
     //     } );
     // }
 
     // #[bench]
-    // fn big_hashmap_bench_fasthashmap(b: &mut extra::test::BenchHarness) {
+    // fn big_WriteableHashMap_bench_fastWriteableHashMap(b: &mut extra::test::BenchHarness) {
     //     let words = get_words();
     //     b.iter( || {
-    //         let mut m = HashMap::new(); // with_capacity(2 * words.len());
+    //         let mut m = WriteableHashMap::new(); // with_capacity(2 * words.len());
     //         for w in words.iter() { m.insert(w, 27); }
     //     } );
     // }
 
     // #[bench]
-    // fn big_hashmap_bench_siphashmap(b: &mut extra::test::BenchHarness) {
+    // fn big_WriteableHashMap_bench_sipWriteableHashMap(b: &mut extra::test::BenchHarness) {
     //     let words = get_words();
     //     b.iter( || {
-    //         let mut m = std::hashmap::HashMap::new(); // with_capacity(2 * words.len());
+    //         let mut m = std::WriteableHashMap::WriteableHashMap::new(); // with_capacity(2 * words.len());
     //         for w in words.iter() { m.insert(w, 27); }
     //     } );
     // }

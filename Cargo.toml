@@ -1,6 +1,6 @@
 [package]
-name = "fasthashmap"
+name = "WriteableHashMap"
 version = "0.1.0"
-authors = ["Tommy M. McGuire <mcguire@crsr.net>"]
+authors = ["Joel Self <self@jself.io>", "Tommy M. McGuire <mcguire@crsr.net>"]
 
 [dependencies]
