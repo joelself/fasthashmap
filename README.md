@@ -19,7 +19,7 @@ WritableHashMap Use
 -----------
 
 The implementation in this module currently supports many of the same methods as
-std::collections::WritableHashMap, but not all.
+std::collections::HashMap, but not all.
 
 ### Constructing a WritableHashMap ###
 
@@ -37,7 +37,7 @@ WritableHashSet Use
 -----------
 
 The implementation in this module currently supports many of the same methods as
-std::collections::WritableHashSet, but not all.
+std::collections::HashSet, but not all.
 
 ### Constructing a WritableHashSet ###
 
