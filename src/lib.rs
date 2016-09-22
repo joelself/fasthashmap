@@ -9,6 +9,8 @@
 use std::borrow::Borrow;
 use std::hash::{Hasher,Hash};
 use std::slice::Iter;
+use std::io::Write;
+use std::boxed::Box;
 
 // Simple implementation of the DJB hash
 // (See http://cr.yp.to/cdb/cdb.txt and http://www.cse.yorku.ca/~oz/hash.html)
@@ -106,16 +108,16 @@ impl<K, V> Entry<K,V> {
         }
     }
 }
-
-pub struct HashMap<K,V> {
-    table     : Vec<Entry<K,V>>,
+#[derive(Write, Read)]
+pub struct WriteableHashMap<K,V> where K: Write + Read + ?Sized V: Write + Read + ?Sized {
+    table     : Box<[Entry<K,V>]>,
     capacity  : usize,
     mask      : u64,
     length    : usize,
     ghosts    : usize,
 }
 
-impl<K,V> HashMap<K,V> where K: Hash + Eq {
+impl<K,V> WritableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Sized, V: Write, Read + ?Sized {
 
     #[inline]
     pub fn new() -> HashMap<K,V> {
