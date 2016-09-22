@@ -9,8 +9,9 @@
 use std::borrow::Borrow;
 use std::hash::{Hasher,Hash};
 use std::slice::Iter;
-use std::io::Write;
+use std::io::{Write, Read};
 use std::boxed::Box;
+use std::io;
 
 // Simple implementation of the DJB hash
 // (See http://cr.yp.to/cdb/cdb.txt and http://www.cse.yorku.ca/~oz/hash.html)
@@ -39,7 +40,7 @@ impl Hasher for DJBHasher {
 
 /* ----------------------------------------------- */
 
-// This is an implementation of a Rust WriteableHashMap based on the DJB hash and
+// This is an implementation of a Rust WritableHashMap based on the DJB hash and
 // Python's dictionaries. See:
 //
 // * http://stackoverflow.com/questions/327311/how-are-pythons-built-in-dictionaries-implemented
@@ -56,6 +57,39 @@ pub enum Entry<K,V> {
     Empty,                      // This slot is empty
     Full(K,V,u64),              // This slot is holding a key and value
     Ghost(K,u64),               // This slot once held key k
+}
+
+// ******** Stubbed out not for public consumption ********
+impl<K: Write, V: Write> Write for Entry<K,V> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        Ok(3)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+// ******** Stubbed out not for public consumption ********
+impl<K: Read, V: Read> Read for Entry<K,V> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_to_string(&mut self, buf: &mut String) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
+        Ok(())
+    }
 }
 
 impl<K, V> Entry<K,V> {
@@ -108,8 +142,42 @@ impl<K, V> Entry<K,V> {
         }
     }
 }
-#[derive(Write, Read)]
-pub struct WriteableHashMap<K,V> where K: Write + Read + ?Sized V: Write + Read + ?Sized {
+
+// ******** Stubbed out not for public consumption ********
+impl<K: Write + Read, V: Write + Read> Write for WritableHashMap<K, V> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        Ok(3)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+// ******** Stubbed out not for public consumption ********
+impl<K: Write + Read, V: Write + Read> Read for WritableHashMap<K, V> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_to_string(&mut self, buf: &mut String) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+
+pub struct WritableHashMap<K: Write + Read, V: Write + Read> {
     table     : Box<[Entry<K,V>]>,
     capacity  : usize,
     mask      : u64,
@@ -117,19 +185,18 @@ pub struct WriteableHashMap<K,V> where K: Write + Read + ?Sized V: Write + Read 
     ghosts    : usize,
 }
 
-impl<K,V> WritableWriteableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Sized, V: Write, Read + ?Sized {
+impl<K,V> WritableHashMap<K,V> where K: Hash + Eq + Write + Read + Clone, V: Write + Read + Clone {
 
     #[inline]
-    pub fn new() -> WriteableHashMap<K,V> {
-        WriteableHashMap::with_capacity(8)
+    pub fn new() -> WritableHashMap<K,V> {
+        WritableHashMap::with_capacity(8)
     }
 
     #[inline]
-    pub fn with_capacity(sz: usize) -> WriteableHashMap<K,V> {
+    pub fn with_capacity(sz: usize) -> WritableHashMap<K,V> {
         let capacity = usize::next_power_of_two(sz);
-        let mut table = Vec::with_capacity(capacity);
-        for _ in 0..capacity { table.push(Entry::Empty); }
-        WriteableHashMap {
+        let mut table = vec![Entry::Empty; capacity].into_boxed_slice();
+        WritableHashMap {
             table   : table,
             capacity: capacity,
             mask    : (capacity as u64) - 1,
@@ -205,8 +272,8 @@ impl<K,V> WritableWriteableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Siz
 
     #[inline]
     fn do_expand(&mut self, new_capacity: usize) {
-        let mut new_tbl = WriteableHashMap::with_capacity( new_capacity );
-        for i in 0..self.table.len() {
+        let mut new_tbl = WritableHashMap::with_capacity( new_capacity );
+        for i in 0..self.capacity {
             match std::mem::replace(&mut self.table[i], Entry::Empty) {
                 Entry::Full(k,v,h)               => { new_tbl.swap_with_hash(k,h,v); }
                 Entry::Empty | Entry::Ghost(..)  => { }
@@ -292,22 +359,22 @@ impl<K,V> WritableWriteableHashMap<K,V> where K: Hash + Eq + Write + Read + ?Siz
         self.get(k).is_some()
     }
 
-    pub fn iter(&self) -> WriteableHashMapIter<K,V> {
-        WriteableHashMapIter { inner: self.table.iter() }
+    pub fn iter(&self) -> WritableHashMapIter<K,V> {
+        WritableHashMapIter { inner: self.table.iter() }
     }
 
-    pub fn keys(&self) -> WriteableHashMapKeys<K,V> {
-        WriteableHashMapKeys { inner: self.iter() }
+    pub fn keys(&self) -> WritableHashMapKeys<K,V> {
+        WritableHashMapKeys { inner: self.iter() }
     }
 }
 
 // ----------------------------------------
 
-pub struct WriteableHashMapIter<'l,K: 'l,V: 'l> {
+pub struct WritableHashMapIter<'l,K: 'l,V: 'l> {
     inner: Iter<'l,Entry<K,V>>,
 }
 
-impl<'l,K,V> Iterator for WriteableHashMapIter<'l,K,V> {
+impl<'l,K,V> Iterator for WritableHashMapIter<'l,K,V> {
     type Item = (&'l K, &'l V);
     fn next(&mut self) -> Option<(&'l K, &'l V)> {
         let mut n = self.inner.next();
@@ -327,11 +394,11 @@ impl<'l,K,V> Iterator for WriteableHashMapIter<'l,K,V> {
     }
 }
 
-pub struct WriteableHashMapKeys<'l,K: 'l,V: 'l> {
-    inner: WriteableHashMapIter<'l,K,V>,
+pub struct WritableHashMapKeys<'l,K: 'l,V: 'l> {
+    inner: WritableHashMapIter<'l,K,V>,
 }
 
-impl<'l,K,V> Iterator for WriteableHashMapKeys<'l,K,V> {
+impl<'l,K,V> Iterator for WritableHashMapKeys<'l,K,V> {
     type Item = &'l K;
     fn next(&mut self) -> Option<&'l K> {
         match self.inner.next() {
@@ -342,21 +409,58 @@ impl<'l,K,V> Iterator for WriteableHashMapKeys<'l,K,V> {
 }
 
 /* ----------------------------------------------- */
-
-pub struct HashSet<T> {
-    map: WriteableHashMap<T,()>
+#[derive(Clone)]
+pub struct Empty {
+    empty: (),
 }
 
-impl<T> HashSet<T> where T: Hash + Eq {
+// ******** Stubbed out not for public consumption ********
+impl Write for Empty {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        Ok(3)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+// ******** Stubbed out not for public consumption ********
+impl Read for Empty {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_to_string(&mut self, buf: &mut String) -> io::Result<usize> {
+        Ok(3)
+    }
+
+    fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+pub struct WritableHashSet<T: Write + Read> {
+    map: WritableHashMap<T,Empty>
+}
+
+impl<T> WritableHashSet<T> where T: Hash + Eq + Write + Read + Clone {
 
     #[inline]
-    pub fn new() -> HashSet<T> {
-        HashSet { map: WriteableHashMap::new() }
+    pub fn new() -> WritableHashSet<T> {
+        WritableHashSet { map: WritableHashMap::new() }
     }
 
     #[inline]
     pub fn insert(&mut self, v: T) -> bool {
-        match self.map.insert(v, ()) {
+        match self.map.insert(v, Empty{ empty: () }) {
             Some(_) => false,
             None    => true,
         }
@@ -368,7 +472,7 @@ impl<T> HashSet<T> where T: Hash + Eq {
     }
 
     #[inline]
-    pub fn iter(&self) -> WriteableHashMapKeys<T,()> {
+    pub fn iter(&self) -> WritableHashMapKeys<T,Empty> {
         self.map.keys()
     }
 
@@ -378,7 +482,7 @@ impl<T> HashSet<T> where T: Hash + Eq {
     }
 
     #[inline]
-    pub fn is_disjoint(&self, other: &HashSet<T>) -> bool {
+    pub fn is_disjoint(&self, other: &WritableHashSet<T>) -> bool {
         for elt in self.map.table.iter() {
             match *elt {
                 Entry::Full(ref k,_,_) => { if other.contains(k) { return false; } },
@@ -389,7 +493,7 @@ impl<T> HashSet<T> where T: Hash + Eq {
     }
 
     #[inline]
-    pub fn is_subset(&self, other: &HashSet<T>) -> bool {
+    pub fn is_subset(&self, other: &WritableHashSet<T>) -> bool {
         for elt in self.map.table.iter() {
             match *elt {
                 Entry::Full(ref k,_,_) => { if !other.contains(k) { return false; } },
@@ -400,7 +504,7 @@ impl<T> HashSet<T> where T: Hash + Eq {
     }
 
     #[inline]
-    pub fn is_superset(&self, other: &HashSet<T>) -> bool { other.is_subset(self) }
+    pub fn is_superset(&self, other: &WritableHashSet<T>) -> bool { other.is_subset(self) }
 }
 
 /* ----------------------------------------------- */
@@ -410,7 +514,7 @@ mod tests {
     use std::fs::File;
     use std::io::{BufRead,BufReader};
 
-    use super::{WriteableHashMap,HashSet};
+    use super::{WritableHashMap,WritableHashSet};
 
     #[allow(dead_code)]         // Used by benchmarking code.
     fn get_words() -> Vec<String> {
@@ -421,7 +525,7 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let m: WriteableHashMap<usize,usize> = WriteableHashMap::new();
+        let m: WritableHashMap<usize,usize> = WritableHashMap::new();
         assert_eq!(m.len(), 0);
         assert_eq!(m.capacity(), 8);
         assert_eq!(m.get(&1), None);
@@ -433,7 +537,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let mut m: WriteableHashMap<usize,usize> = WriteableHashMap::new();
+        let mut m: WritableHashMap<usize,usize> = WritableHashMap::new();
         assert_eq!(m.len(), 0);
         assert_eq!(m.insert(1,400), None);
         assert_eq!(m.len(), 1);
@@ -459,7 +563,7 @@ mod tests {
 
     #[test]
     fn test_eight() {
-        let mut m: WriteableHashMap<usize,usize> = WriteableHashMap::new();
+        let mut m: WritableHashMap<usize,usize> = WritableHashMap::new();
         let v = [1,3,5,7,9,11,13,15];
         for i in v.iter() {
             assert_eq!(m.insert(*i,100 * *i), None);
@@ -475,7 +579,7 @@ mod tests {
 
     #[test]
     fn test_set_empty() {
-        let s: HashSet<usize> = HashSet::new();
+        let s: WritableHashSet<usize> = WritableHashSet::new();
         assert_eq!(s.len(), 0);
         assert!(!s.contains(&3));
         let mut count = 0;
@@ -485,7 +589,7 @@ mod tests {
 
     #[test]
     fn test_set_nonempty() {
-        let mut s: HashSet<usize> = HashSet::new();
+        let mut s: WritableHashSet<usize> = WritableHashSet::new();
         let v = [1,3,5,7,9,11,13,15];
         for i in v.iter() {
             assert!(s.insert(*i));
@@ -495,7 +599,7 @@ mod tests {
         let mut count = 0;
         for _ in s.iter() { count += 1; }
         assert_eq!(count, 8);
-        let empty: HashSet<usize> = HashSet::new();
+        let empty: WritableHashSet<usize> = WritableHashSet::new();
         assert!( s.is_disjoint(&empty) );
         assert!( empty.is_subset(&s) );
         assert!( s.is_superset(&empty) );
@@ -508,10 +612,10 @@ mod tests {
     // }
 
     // #[bench]
-    // fn WriteableHashMap_bench_stdlib(b: &mut extra::test::BenchHarness) {
+    // fn WritableHashMap_bench_stdlib(b: &mut extra::test::BenchHarness) {
     //     let list = ["abashed", "acrid", "dachshund's", "hackle", "zigzagging"];
     //     b.iter( || {
-    //         let mut m = std::WriteableHashMap::WriteableHashMap::new();
+    //         let mut m = std::WritableHashMap::WritableHashMap::new();
     //         for w in list.iter() { m.insert(w, 27); }
     //     } );
     // }
@@ -523,28 +627,28 @@ mod tests {
     // }
 
     // #[bench]
-    // fn WriteableHashMap_bench_fastWriteableHashMap(b: &mut extra::test::BenchHarness) {
+    // fn WritableHashMap_bench_fastWritableHashMap(b: &mut extra::test::BenchHarness) {
     //     let list = ["abashed", "acrid", "dachshund's", "hackle", "zigzagging"];
     //     b.iter( || {
-    //         let mut m = WriteableHashMap::new();
+    //         let mut m = WritableHashMap::new();
     //         for w in list.iter() { m.insert(w, 27); }
     //     } );
     // }
 
     // #[bench]
-    // fn big_WriteableHashMap_bench_fastWriteableHashMap(b: &mut extra::test::BenchHarness) {
+    // fn big_WritableHashMap_bench_fastWritableHashMap(b: &mut extra::test::BenchHarness) {
     //     let words = get_words();
     //     b.iter( || {
-    //         let mut m = WriteableHashMap::new(); // with_capacity(2 * words.len());
+    //         let mut m = WritableHashMap::new(); // with_capacity(2 * words.len());
     //         for w in words.iter() { m.insert(w, 27); }
     //     } );
     // }
 
     // #[bench]
-    // fn big_WriteableHashMap_bench_sipWriteableHashMap(b: &mut extra::test::BenchHarness) {
+    // fn big_WritableHashMap_bench_sipWritableHashMap(b: &mut extra::test::BenchHarness) {
     //     let words = get_words();
     //     b.iter( || {
-    //         let mut m = std::WriteableHashMap::WriteableHashMap::new(); // with_capacity(2 * words.len());
+    //         let mut m = std::WritableHashMap::WritableHashMap::new(); // with_capacity(2 * words.len());
     //         for w in words.iter() { m.insert(w, 27); }
     //     } );
     // }

@@ -1,4 +1,4 @@
 [root]
-name = "WriteableHashMap"
+name = "writable_hash_map"
 version = "0.1.0"
 

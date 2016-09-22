@@ -1,7 +1,7 @@
-fastWriteableHashMap
+fastWritableHashMap
 ===========
 
-Rust WriteableHashMap based on a faster hash function and Python dictionaries.
+Rust WritableHashMap based on a faster hash function and Python dictionaries.
 
 
 WARNING
@@ -13,33 +13,33 @@ strong. This map is open to
 
 CAUTION IS ADVISED.
 
-WriteableHashMap Use
+WritableHashMap Use
 -----------
 
 The implementation in this module currently supports many of the same methods as
-std::collections::WriteableHashMap, but not all.
+std::collections::WritableHashMap, but not all.
 
-### Constructing a WriteableHashMap ###
+### Constructing a WritableHashMap ###
 
-    let map = WriteableHashMap::new();
+    let map = WritableHashMap::new();
 
 Constructs a map with a default capacity, currently 8. The map will
 expand as necessary.
 
-    let map = WriteableHashMap::with_capacity( 30 );
+    let map = WritableHashMap::with_capacity( 30 );
 
 Constructs a map with a capacity of at least 30.
 
 
-HashSet Use
+WritableHashSet Use
 -----------
 
 The implementation in this module currently supports many of the same methods as
-std::collections::HashSet, but not all.
+std::collections::WritableHashSet, but not all.
 
-### Constructing a HashSet ###
+### Constructing a WritableHashSet ###
 
-    let set = HashSet::new();
+    let set = WritableHashSet::new();
 
 Constructs a set with a default capacity, currently 8. The set will
 expand as necessary.
@@ -67,7 +67,7 @@ http://www.cse.yorku.ca/~oz/hash.html.
 Hashtable
 ---------
 
-The hashtable code is loosely based on Python's dictionaries. Since the WriteableHashMap
+The hashtable code is loosely based on Python's dictionaries. Since the WritableHashMap
 implementation in the Rust standard library has been updated to be Robin Hood
 Hashing (i.e. bucket stealing), this implementation may not be faster than the
 standard libraries', although using the DJB2 hash function makes it likely.
@@ -99,4 +99,4 @@ Rust docs:
 Name
 ----
 
-Yes, I had to change the repo name from 'fashWriteableHashMap'. This is because I can neither type nor see, apparently. Sorry.
+Yes, I had to change the repo name from 'fashWritableHashMap'. This is because I can neither type nor see, apparently. Sorry.
